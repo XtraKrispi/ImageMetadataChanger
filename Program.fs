@@ -53,23 +53,21 @@ let convertFile (getOutputFile: string -> string) inputFile =
             file.Save outputFile)
 
 
-
 [<EntryPoint>]
 let main argv =
+    let convertName (destination: string) (i: string) =
+        let fileName = Path.GetFileName i
+        Path.Combine(destination, fileName)
+
     match argv with
     | [| source; destination |] ->
-        let jpgs =
-            Directory.EnumerateFiles(source, "*.jpg", SearchOption.AllDirectories)
+        Directory.EnumerateFiles(source, "*.jpg", SearchOption.AllDirectories)
+        |> Seq.toList
+        |> List.iter (convertFile (convertName destination))
 
-        let allFiles = jpgs |> Seq.toList
-
-        allFiles
-        |> List.iter (
-            convertFile
-                (fun i ->
-                    let fileName = Path.GetFileName i
-                    Path.Combine(destination, fileName))
-        )
+        Directory.EnumerateFiles(source, "*.mp4", SearchOption.AllDirectories)
+        |> Seq.toList
+        |> List.iter (fun input -> File.Copy(input, (convertName destination input)))
 
         0
-    | _ -> 0 // return an integer exit code
+    | _ -> 1 // return an integer exit code
